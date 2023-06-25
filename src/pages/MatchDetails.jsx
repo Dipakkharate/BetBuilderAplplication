@@ -62,7 +62,7 @@ export default function MatchDetails() {
             if (selectedMarket && selectedLeg) {
                 const { data } = await axios.get(`http://cms.bettorlogic.com/api/BetBuilder/GetBetBuilderBets?sports=1&matchId=${Match}&marketId=${selectedMarket.MarketId}&legs=${selectedLeg.selectionId}&language=en`);
                 setBets(data.BetBuilderSelections)
-                // console.log(data.BetBuilderSelections);
+                console.log(data.BetBuilderSelections);
 
             }
         };
@@ -165,18 +165,20 @@ export default function MatchDetails() {
                             </tr>
                         </thead>
                         <tbody>
+
                             {
+                                bets.length > 0 && (
 
-                                bets.map((bet) => (<tr>
-                                    <td>{bet.RTB}</td>
-                                    <td>{bet.Market}</td>
-                                    <td>{bet.Selection}</td>
-                                </tr>
-                                ))
+                                    bets.map((bet, index) => (<tr>
+                                        <td>{bet.RTB}</td>
+                                        <td>{bet.Market}</td>
+                                        <td>{bet.Selection}</td>
+                                    </tr>
+                                    ))
 
+
+                                )
                             }
-
-
                         </tbody>
                     </table>
                 </div>

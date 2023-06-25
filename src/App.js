@@ -1,9 +1,9 @@
 
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import './App.css';
-import Home from './Home';
-import TopHeader from './TopHeader';
-import MatchDetails from './MatchDetails';
+import Home from './pages/Home';
+import TopHeader from './pages/TopHeader';
+import MatchDetails from './pages/MatchDetails';
 
 
 
