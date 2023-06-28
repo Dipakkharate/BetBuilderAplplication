@@ -1,78 +1,49 @@
-import axios from 'axios'
-import React, { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+
+import React, { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Link, useParams } from 'react-router-dom';
+import {
+    fetchBetsAction,
+    fetchFixtureDataAction,
+    fetchLegsDataAction,
+    fetchMarketDataAction,
+} from '../redux_toolkit/betActions/betAction';
+
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export default function MatchDetails() {
-    const [marketList, setMarketList] = useState([]);
-    const [legList, setLegList] = useState([]);
     const [selectedMarket, setSelectedMarket] = useState(null);
     const [selectedLeg, setSelectedLeg] = useState(null);
-    const [bets, setBets] = useState([])
-    const [team, setteam] = useState({})
-    const { Match } = useParams()
+    const [team, setTeam] = useState({});
+    const { Match } = useParams();
 
-
-    // console.log(team, "team");
-
-    useEffect(() => {
-        const fetchMatchInfo = async () => {
-            const { data } = await axios.get(`http://cms.bettorlogic.com/api/BetBuilder/GetFixtures?sports=1`)
-            const selected = data.find(obj => obj.MatchId === Match);
-            setteam(selected)
-        };
-        fetchMatchInfo();
-
-    }, [team]);
-
+    const dispatch = useDispatch();
+    const { allFixtureData, betList, marketLists, legLists, loading } = useSelector((state) => state.fixture);
 
     useEffect(() => {
-
-        const fetchMarketList = async () => {
-            const { data } = await axios.get('http://cms.bettorlogic.com/api/BetBuilder/GetMarkets?sports=1');
-            setMarketList(data);
-        };
-        fetchMarketList()
-
-    }, [])
+        const selected = allFixtureData?.find((obj) => obj.MatchId === Match);
+        setTeam(selected);
+    }, [allFixtureData, Match]);
 
     useEffect(() => {
-        const getLegs = async () => {
-            const { data } = await axios.get("http://cms.bettorlogic.com/api/BetBuilder/GetSelections?sports=1")
-            setLegList(data)
+        dispatch(fetchLegsDataAction());
+        dispatch(fetchMarketDataAction());
+    }, []);
 
+    useEffect(() => {
+        if (selectedMarket && selectedLeg) {
+            dispatch(fetchBetsAction({ Match, selectedMarket: selectedMarket.MarketId, selectedLeg: selectedLeg.selectionId }));
         }
-        getLegs()
-    }, [])
-
-
-
-    const handleMarketSelect = (market) => {
-        setSelectedMarket(market);
-    };
-
-    const handleLegSelect = (leg) => {
-        setSelectedLeg(leg);
-    };
-
-
-
-
-    useEffect(() => {
-        const fetchBets = async () => {
-            if (selectedMarket && selectedLeg) {
-                const { data } = await axios.get(`http://cms.bettorlogic.com/api/BetBuilder/GetBetBuilderBets?sports=1&matchId=${Match}&marketId=${selectedMarket.MarketId}&legs=${selectedLeg.selectionId}&language=en`);
-                setBets(data.BetBuilderSelections)
-                console.log(data.BetBuilderSelections);
-
-            }
-        };
-        fetchBets();
-
     }, [selectedMarket, selectedLeg]);
 
-    const ConvertDate = (item) => {
+    useEffect(() => {
+        if (!allFixtureData) {
+            dispatch(fetchFixtureDataAction());
+        }
+    }, [allFixtureData]);
+
+    const convertDate = (item) => {
         const dateTime = new Date(item);
-        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
         const month = monthNames[dateTime.getMonth()];
         const day = dateTime.getDate();
         const year = dateTime.getFullYear();
@@ -82,110 +53,119 @@ export default function MatchDetails() {
 
     return (
         <>
-            <div class="card">
-                <div class="card-body">
-                    <button type="button" class="btn btn-danger">
-                        <Link to="/" className='text-decoration-none text-light'>  <i class="bi bi-arrow-left"></i></Link>
-
-                    </button>
-
+            <div className="card">
+                <div className="card-body">
+                    <Link to="/" className="text-decoration-none text-light">
+                        <button type="button" className="btn btn-danger">
+                            <i className="bi bi-arrow-left"></i>
+                        </button>
+                    </Link>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-body bg-danger" >
-                    <h1 className='text-light' >
-                        Make It A Bet Builder
-                    </h1>
+            <div className="card">
+                <div className="card-body bg-danger">
+                    <h1 className="text-light">Make It A Bet Builder</h1>
                 </div>
-                <div class="card-body">
-                </div>
+                <div className="card-body"></div>
 
-                <nav class="navbar  navbar-expand-lg bg-dark text-light navbar-light sticky-top py-0 pe-5">
-                    <div class="navbar-brand  ps-5 me-0">
-                        <div class="text-center text-light" style={{ "margin-left": "85px" }}>
-                            <strong>{ConvertDate(team?.MatchDate)}</strong>
-                            <br />
+                {team ? (
+                    <>
+                        <nav className="navbar navbar-expand-lg bg-dark text-light navbar-light sticky-top py-0 pe-5">
+                            <div className="navbar-brand ps-5 me-0">
+                                <div className="text-center text-light" style={{ marginLeft: "85px" }}>
+                                    <strong>{convertDate(team?.MatchDate)}</strong>
+                                    <br />
+                                    <strong className="text-center">{team?.MatchTime?.substring(0, 5)}</strong>
+                                </div>
+                            </div>
 
-                            <strong className='text-center '>{team?.MatchTime?.substring(0, 5)}</strong>
+                            <div className="collapse navbar-collapse" id="navbarCollapse">
+                                <div style={{ marginLeft: "300px" }}>
+                                    <h3 className="text-center">
+                                        {team?.Team1Name} VS {team?.Team2Name}
+                                    </h3>
+                                    <h6 className="text-center">{team?.LeagueName}</h6>
+                                </div>
+                            </div>
+                        </nav>
+                    </>
+                ) : (
+                    <>
+                        <div className="preloader-container">
+                            <div className="preloader"></div>
                         </div>
-                    </div>
-
-                    <div class="collapse navbar-collapse " id="navbarCollapse">
-                        <div style={{ "margin-left": "300px" }}>
-                            <h3 class="text-center" >{team?.Team1Name} VS {team?.Team2Name} </h3>
-                            <h6 className='text-center'>{team?.LeagueName}</h6>
-                        </div>
-                    </div>
-                </nav>
-
-
+                    </>
+                )}
             </div>
 
-            <div className='container mt-4'>
-
-
+            <div className="container mt-4">
                 <div>
-                    <div class="btn-group">
+                    <div className="btn-group">
                         <strong>Market List:</strong>
-                        <select onChange={(e) => handleMarketSelect(marketList[e.target.selectedIndex])}>
-                            {marketList.map((match, index) => (
-                                <option key={index} value={index}>
+                        <select onChange={(e) => setSelectedMarket(marketLists[e.target.selectedIndex])}>
+                            {marketLists?.map((match, index) => (
+                                <option key={match.MarketId} value={index}>
                                     {match.MarketName}
                                 </option>
                             ))}
                         </select>
-
                     </div>
-                    <div class="btn-group ms-5 mt-2 ">
-                        <strong> Ligs:</strong>
-                        <select onChange={(e) => handleLegSelect(legList[e.target.selectedIndex])}>
-                            {legList.map((leg, index) => (
-                                <option key={index} value={index}>
+                    <div className="btn-group ms-5 mt-2">
+                        <strong>Legs:</strong>
+                        <select onChange={(e) => setSelectedLeg(legLists[e.target.selectedIndex])}>
+                            {legLists?.map((leg, index) => (
+                                <option key={leg.selectionId} value={index}>
                                     {leg.selectionId}
                                 </option>
                             ))}
                         </select>
                     </div>
                 </div>
-            </div >
+            </div>
 
+            {betList ? <>
 
-
-            <div className="container mt-5">
-                <h4>BetBuilder Bets Oods:</h4>
-                <div className="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr className='alert alert-secondary text-danger'>
-
-                                <th>Keys States</th>
-                                <th >Market</th>
-                                <th>Outcome</th>
-
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                            {
-                                bets.length > 0 && (
-
-                                    bets.map((bet, index) => (<tr>
+                <div className="container mt-5">
+                    <h4>BetBuilder Bets Odds:</h4>
+                    <div className="table-responsive">
+                        <table className="table table-bordered">
+                            <thead>
+                                <tr className="alert alert-secondary text-danger">
+                                    <th>Keys States</th>
+                                    <th>Market</th>
+                                    <th>Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {betList?.map((bet, index) => (
+                                    <tr key={index}>
                                         <td>{bet.RTB}</td>
                                         <td>{bet.Market}</td>
                                         <td>{bet.Selection}</td>
                                     </tr>
-                                    ))
-
-
-                                )
-                            }
-                        </tbody>
-                    </table>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
-            </div>
+            </>
 
 
+                : <>
+                    <div className="preloader-container">
+                        <div className="preloader"></div>
+                    </div>
+                </>
+
+
+
+            }
         </>
-    )
+    );
 }
+
+
+
+
+

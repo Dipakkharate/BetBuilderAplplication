@@ -9,16 +9,14 @@ import MatchDetails from './pages/MatchDetails';
 
 function App() {
   return (
-
-
     <BrowserRouter>
       <TopHeader />
       <Routes>
         <Route path='' element={<Home />} />
-
         <Route path='/match-details/:Match' element={<MatchDetails />} />
       </Routes>
     </BrowserRouter>
+
   );
 }
 
